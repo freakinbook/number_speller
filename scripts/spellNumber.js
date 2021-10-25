@@ -78,6 +78,9 @@ function spellArray(digitArray) {
     while (digitArray.length > 0){
         let orderNumber = Math.floor((digitArray.length-1) / 3);
         let order = orders[orderNumber];
+        if (typeof order === "undefined"){
+            return spellTooBig();
+        }
         console.log(order);
         let tripletArray = getTriplet(digitArray);
         spelling += spellTriplet(tripletArray);
@@ -186,7 +189,6 @@ function spellTooBig() {
 
 function deconstructNumber(deconstructee) {
     let numberAsArray = [];
-    let divisor = 10;
     let index = 0;
     let sign = "";
     if (deconstructee.includes("-")) {
@@ -196,10 +198,8 @@ function deconstructNumber(deconstructee) {
     if (deconstructee === "0") {
         return [0];
     }
-    while (deconstructee / divisor >= 0.1) {
-        let trimGreaterPositions = deconstructee - Math.floor(deconstructee / divisor) * divisor;
-        let nextDigit = Math.floor(trimGreaterPositions / (divisor / 10));
-        divisor *= 10;
+    for (let i = deconstructee.length - 1 ; i >= 0 ; i-- ) {
+        let nextDigit = parseInt(deconstructee[i],10);
         numberAsArray[index++] = nextDigit;
     }
     if (sign === "-") {
