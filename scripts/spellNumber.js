@@ -12,6 +12,7 @@ const singleDigit = {
 }
 
 const teens = {
+    10: "ten",
     11: "eleven",
     12: "twelve",
     13: "thirteen",
@@ -24,7 +25,6 @@ const teens = {
 }
 
 const tens = {
-    1: "ten",
     2: "twenty",
     3: "thirty",
     4: "forty",
@@ -35,10 +35,21 @@ const tens = {
     9: "ninety"
 }
 
+const orders = {
+    0 : "",
+    1 : " thousand ",
+    2 : " million ",
+    3 : " billion ",
+    4 : " trillion ",
+    5 : " quadrillion ",
+    6 : " quintillion ",
+    7 : " sextillion ",
+    8 : " septillion "
+}
+
 const hundred = " hundred";
-const thousand = " thousand";
-const million = " million ";
 const minusSign = "minus ";
+const and = " and ";
 
 /**
  * 
@@ -55,120 +66,97 @@ function spellNumber() {
     $(".spelling").text(spelling);
 }
 
-function spellArray(arrayOfDigits) {
-    let wasSpelled = false;
+function spellArray(digitArray) {
     let spelling = "";
-    if (arrayOfDigits[arrayOfDigits.length - 1] === "-") {
-        arrayOfDigits.pop();
+    if (digitArray[digitArray.length - 1] === "-") {
+        digitArray.pop();
         spelling += minusSign;
     }
-    switch (arrayOfDigits.length) {
-        default: {
-            spelling = spellTooBig();
-            break;
-        }
-    //million
-    case 7: {
-        let index = 6;
-        let thisDigit = arrayOfDigits[index];
-        spelling += spellSingleDigit(thisDigit);
-        spelling += million;
-        if (isIndexFirstNonZero(arrayOfDigits, index)) {
-            break;
-        }
+    if (digitArray.length === 1 && digitArray[0] === 0){
+        return singleDigit[0];
     }
-    // hundred thousand
-    case 6: {
-        let index = 5;
-        let thisDigit = arrayOfDigits[index];
-        if (thisDigit !== 0) {
-            spelling += spellSingleDigit(thisDigit);
-            spelling += hundred;
-            if (isIndexFirstNonZero(arrayOfDigits, index)) {
-                wasSpelled = true;
-            } else if (!divisibleByHundred(arrayOfDigits, index)){
-                spelling += " and ";
-            }
-        }
-    }
-    //ten thousand
-    case 5: {
-        let index = 4;
-        let thisDigit = arrayOfDigits[index];
-        let nextDigit = arrayOfDigits[index - 1];
-        if (thisDigit !== 0) {
-            if (nextDigit === 0) {
-                spelling += spellDoubleDigit(thisDigit);
-                wasSpelled = true;
-            } else if (thisDigit > 1) {
-                spelling += spellDoubleDigit(thisDigit);
-                spelling += "-";
-            } else {
-                spelling += spellTeens(nextDigit);
-                wasSpelled = true;
-            }
-        }
-    }
-    //thousand
-    case 4: {
-        let index = 3;
-        let thisDigit = arrayOfDigits[index];
-        if (!wasSpelled && thisDigit !== 0) {
-            spelling += spellSingleDigit(thisDigit);
-            wasSpelled = false;
-        }
-        spelling += thousand;
-        if (isIndexFirstNonZero(arrayOfDigits, index)) {
-            break;
-        } else {
-            spelling += " ";
-        }
-
-    }
-    // hundred
-    case 3: {
-        let index = 2;
-        let thisDigit = arrayOfDigits[index];
-        if (thisDigit !== 0) {
-            spelling += spellSingleDigit(thisDigit);
-            spelling += hundred;
-        }
-        if (isIndexFirstNonZero(arrayOfDigits, index)) {
-            break;
-        } else {
-            spelling += " and ";
-        }
-    }
-    // ten
-    case 2: {
-        let index = 1;
-        let thisDigit = arrayOfDigits[index];
-        let nextDigit = arrayOfDigits[index - 1];
-        if (thisDigit !== 0) {
-            if (nextDigit === 0) {
-                spelling += spellDoubleDigit(thisDigit);
-                break;
-            } else if (thisDigit > 1) {
-                spelling += spellDoubleDigit(thisDigit);
-                spelling += "-";
-            } else {
-                spelling += spellTeens(nextDigit);
-                break;
-            }
-        }
-    }
-    // one
-    case 1: {
-        let thisDigit = arrayOfDigits[0];
-        spelling += spellSingleDigit(thisDigit);
-    }
-    //empty array
-    case 0: {
-        break;
-    }
+    while (digitArray.length > 0){
+        let orderNumber = Math.floor((digitArray.length-1) / 3);
+        let order = orders[orderNumber];
+        console.log(order);
+        let tripletArray = getTriplet(digitArray);
+        spelling += spellTriplet(tripletArray);
+        spelling += order;
     }
     return spelling;
 }
+
+function getTriplet(digitArray){
+    let triplet = [];
+    let tripletLength = digitArray.length % 3;
+    if (tripletLength === 0){
+        tripletLength = 3;
+    }
+    let emptyOrders = 3 - tripletLength;
+    for (let i = 0; i < emptyOrders; i++){
+        triplet.unshift(0);
+    }
+    for (let i = 0; i < tripletLength; i++){
+        triplet.unshift(digitArray.pop());
+    }
+    console.log(triplet);
+    return triplet;
+}
+
+function spellTriplet(threeDigitArray){
+    if (threeDigitArray.length > 3){
+        throw new RangeError("Input array must be 3 or less elements long");
+    }
+    let spelling = '';
+    let hundreds = threeDigitArray[2];
+    let tens = threeDigitArray[1];
+    let units = threeDigitArray[0];
+    if (hundreds === 0 && tens === 0 && units === 0){
+        return '';
+    }
+    spelling += spellHundreds(hundreds);
+    if (tens > 1){
+        if (hundreds !== 0){
+            spelling += and;
+        }
+        spelling += spellTens(tens);
+        if (units > 0){
+            spelling += `-`;
+            spelling += spellUnits(units);
+        }
+    } else if (tens > 0){
+        if (hundreds !== 0){
+            spelling += and;
+        }
+        spelling += spellTeens(units);
+    } else {
+        if (units > 0){
+            if (hundreds !== 0){
+                spelling += and;
+            }
+            spelling += spellUnits(units);
+        }
+    }
+    return spelling;
+}
+
+function spellHundreds(digit){
+    let spelling = '';
+    if (digit !== 0) {
+        spelling += spellUnits(digit);
+        spelling += hundred;
+    }
+    return spelling;
+}
+
+function spellTens(digit){
+    let spelling = '';
+    if (digit !== 0) {
+            spelling += tens[digit];
+    }
+    return spelling;
+}
+
 
 function spellDoubleDigit(secondDigit) {
     return tens[secondDigit];
@@ -180,7 +168,7 @@ function spellTeens(secondDigit) {
     return teens[constructedNumber];
 }
 
-function spellSingleDigit(input) {
+function spellUnits(input) {
     return singleDigit[input];
 }
 
